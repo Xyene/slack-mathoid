@@ -1,8 +1,6 @@
 import os
-import traceback
 import urllib2
 import urllib
-import re
 
 from contextlib import closing
 
@@ -51,16 +49,14 @@ class MainHandler(tornado.web.RequestHandler):
                 'q': formula,
                 'type': 'tex'
             }))
-        except urllib2.HTTPError as e:
-            if e.code == 400:
-                data = json.loads(e.read())
+        except urllib2.HTTPError as error:
+            if error.code == 400:
+                data = json.loads(error.read())
                 message = '\n'.join(data['detail'])
                 raise MathoidException(message)
-            else:
-                raise MathoidException('Failed to connect to Mathoid for: %s' % formula)
+            raise error
         except Exception:
-            traceback.print_exc()
-            raise MathoidException('Failed to connect to Mathoid for: %s' % formula)
+            raise
 
         with closing(request) as f:
             data = f.read()
