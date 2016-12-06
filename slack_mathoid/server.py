@@ -38,33 +38,29 @@ class MainHandler(tornado.web.RequestHandler):
             image.write(raw_png_data)
 
     def generate_filename(self):
+        formula = tornado.escape.xhtml_unescape(self.get_argument('text')).encode('utf-8')
+        print formula
+        formula = formula.replace('!math ', '', 1)
+        filename = hashlib.md5(formula).hexdigest() + ".png"
+
+        if self.is_cached(filename):
+            return filename
+
         try:
-            formula = tornado.escape.xhtml_unescape(self.get_argument('text')).encode('utf-8')
-            print formula
-            formula = formula.replace('!math ', '', 1)
-            filename = hashlib.md5(formula).hexdigest() + ".png"
-
-            if self.is_cached(filename):
-                return filename
-
-            try:
-                request = urllib2.urlopen(MATHOID_URL, urllib.urlencode({
-                    'q': formula,
-                    'type': 'tex'
-                }))
-            except urllib2.HTTPError as e:
-                if e.code == 400:
-                    data = json.loads(e.read())
-                    message = '\n'.join(data['detail'])
-                    raise MathoidException(message)
-                else:
-                    return MathoidException('Failed to connect to Mathoid for: %s' % formula)
-            except Exception:
-                traceback.print_exc()
-                return MathoidException('Failed to connect to Mathoid for: %s' % formula)
-        except Exception as error:
+            request = urllib2.urlopen(MATHOID_URL, urllib.urlencode({
+                'q': formula,
+                'type': 'tex'
+            }))
+        except urllib2.HTTPError as e:
+            if e.code == 400:
+                data = json.loads(e.read())
+                message = '\n'.join(data['detail'])
+                raise MathoidException(message)
+            else:
+                raise MathoidException('Failed to connect to Mathoid for: %s' % formula)
+        except Exception:
             traceback.print_exc()
-            raise MathoidException('Unspecified Mathoid error')
+            raise MathoidException('Failed to connect to Mathoid for: %s' % formula)
 
         with closing(request) as f:
             data = f.read()
