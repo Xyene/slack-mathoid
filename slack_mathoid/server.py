@@ -1,8 +1,8 @@
 import os
 import tempfile
 import traceback
-import urllib.parse
-import urllib.request
+import urllib2
+import urllib
 import re
 
 import subprocess
@@ -45,7 +45,7 @@ class MainHandler(tornado.web.RequestHandler):
 
     def generate_filename(self):
         try:
-            formula = urllib.parse.unquote(self.request.body).encode('utf-8')
+            formula = urllib.unquote(self.request.body).encode('utf-8')
 
             filename = hashlib.md5(formula).hexdigest() + ".png"
 
@@ -53,11 +53,11 @@ class MainHandler(tornado.web.RequestHandler):
                 return filename
 
             try:
-                request = urllib.request.urlopen(MATHOID_URL, urllib.parse.urlencode({
+                request = urllib2.urlopen(MATHOID_URL, urllib.urlencode({
                     'q': formula,
                     'type': 'tex'
                 }))
-            except urllib.request.HTTPError as e:
+            except urllib2.HTTPError as e:
                 if e.code == 400:
                     raise MathoidException('Mathoid failed to render: %s\n%s', formula, e.read())
                 else:
