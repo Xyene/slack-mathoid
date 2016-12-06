@@ -47,7 +47,7 @@ class MainHandler(tornado.web.RequestHandler):
         try:
             formula = urllib.unquote(self.request.body).encode('utf-8')
 
-            filename = hashlib.md5(formula).hexdigest() + ".png"
+            filename = hashlib.sha1(formula).hexdigest() + ".png"
 
             if self.is_cached(filename):
                 return filename
