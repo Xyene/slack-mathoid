@@ -18,8 +18,6 @@ from tornado.options import define, options
 
 define("port", default=8888, help="run on the given port", type=int)
 
-redimensions = re.compile('.*?(\d+)x(\d+).*?')
-
 MATHOID_URL = os.environ['MATHOID_URL']
 MATHOID_CACHE_ROOT = os.environ['MATHOID_CACHE']
 MATHOID_SERVE_URL = os.environ['MATHOID_SERVE_URL']
@@ -88,8 +86,8 @@ class MainHandler(tornado.web.RequestHandler):
     def post(self):
         try:
             text = MATHOID_SERVE_URL + self.generate_filename()
-        except MathoidException:
-            text = 'Rendering exception occured'
+        except Exception as error:
+            text = error.message
         self.write(json.dumps({'text': text}))
 
 
