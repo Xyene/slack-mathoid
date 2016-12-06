@@ -1,13 +1,9 @@
 import os
-import tempfile
 import traceback
 import urllib2
 import urllib
 import re
 
-import subprocess
-
-import sys
 from contextlib import closing
 
 import tornado.httpserver
@@ -45,9 +41,10 @@ class MainHandler(tornado.web.RequestHandler):
 
     def generate_filename(self):
         try:
-            formula = urllib.unquote(self.request.body).encode('utf-8')
-
-            filename = hashlib.sha1(formula).hexdigest() + ".png"
+            formula = tornado.escape.xhtml_unescape(self.get_argument('text')).encode('utf-8')
+            print formula
+            formula = formula.replace('!math ', '', 1)
+            filename = hashlib.md5(formula).hexdigest() + ".png"
 
             if self.is_cached(filename):
                 return filename
@@ -59,7 +56,9 @@ class MainHandler(tornado.web.RequestHandler):
                 }))
             except urllib2.HTTPError as e:
                 if e.code == 400:
-                    raise MathoidException('Mathoid failed to render: %s\n%s', formula, e.read())
+                    data = json.loads(e.read())
+                    message = '\n'.join(data['detail'])
+                    raise MathoidException(message)
                 else:
                     return MathoidException('Failed to connect to Mathoid for: %s' % formula)
             except Exception:
@@ -87,13 +86,18 @@ class MainHandler(tornado.web.RequestHandler):
         return filename
 
     def post(self):
-        self.write(MATHOID_SERVE_URL + self.generate_filename())
+        try:
+            text = MATHOID_SERVE_URL + self.generate_filename()
+        except MathoidException:
+            text = 'Rendering exception occured'
+        self.write(json.dumps({'text': text}))
 
 
 def main():
     tornado.options.parse_command_line()
     application = tornado.web.Application([
         (r"/typeset", MainHandler),
+        (r"/(.*)", tornado.web.StaticFileHandler, {"path": MATHOID_CACHE_ROOT}),
     ])
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(options.port)
