@@ -3,10 +3,10 @@ from setuptools import setup
 setup(
     name='slack-mathoid',
     version='0.1',
-    packages=['slack-mathoid'],
+    packages=['slack_mathoid'],
     entry_points={
         'console_scripts': [
-            'slack-mathoid = slack-mathoid.server:main',
+            'slack-mathoid = slack_mathoid.server:main',
         ]
     },
     install_requires=['tornado'],
