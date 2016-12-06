@@ -39,7 +39,7 @@ class MainHandler(tornado.web.RequestHandler):
         return os.path.exists(path)
 
     def write_cache(self, formula_filename, raw_png_data):
-        filename = os.path.join(MATHOID_URL, formula_filename)
+        filename = os.path.join(MATHOID_CACHE_ROOT, formula_filename)
         with open(filename, 'wb') as image:
             image.write(raw_png_data)
 
