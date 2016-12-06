@@ -84,8 +84,7 @@ class MainHandler(tornado.web.RequestHandler):
 
         raw_png_data = bytearray(data['png']['data'])
         self.write_cache(filename, raw_png_data)
-
-        return
+        return filename
 
     def post(self):
         self.write(MATHOID_SERVE_URL + self.generate_filename())
