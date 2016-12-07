@@ -1,4 +1,5 @@
 import os
+import random
 import urllib2
 import urllib
 
@@ -77,7 +78,8 @@ class MainHandler(tornado.web.RequestHandler):
 
     def post(self):
         try:
-            text = MATHOID_SERVE_URL + self.generate_filename()
+            unfurler = random.randint(0, 1000)
+            text = '%s/%s?v=%s' % (MATHOID_SERVE_URL, self.generate_filename(), unfurler)
         except Exception as error:
             text = error.message
         self.write(json.dumps({'text': text}))
