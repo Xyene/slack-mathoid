@@ -20,6 +20,7 @@ define("port", default=8888, help="run on the given port", type=int)
 MATHOID_URL = os.environ['MATHOID_URL']
 MATHOID_CACHE_ROOT = os.environ['MATHOID_CACHE']
 MATHOID_SERVE_URL = os.environ['MATHOID_SERVE_URL']
+SLACK_AUTH_TOKEN = os.environ.get("SLACK_AUTH_TOKEN", None)
 
 
 class MathoidException(Exception):
@@ -37,9 +38,12 @@ class MainHandler(tornado.web.RequestHandler):
             image.write(raw_png_data)
 
     def generate_filename(self):
+        if SLACK_AUTH_TOKEN and SLACK_AUTH_TOKEN != self.get_argument('token'):
+            raise tornado.web.HTTPError(401)
+
         formula = tornado.escape.xhtml_unescape(self.get_argument('text')).encode('utf-8')
-        print formula
         formula = formula.replace('!math ', '', 1)
+
         filename = hashlib.md5(formula).hexdigest() + ".png"
 
         if self.is_cached(filename):
@@ -80,6 +84,8 @@ class MainHandler(tornado.web.RequestHandler):
         try:
             unfurler = random.randint(0, 1000)
             text = '%s/%s?v=%s' % (MATHOID_SERVE_URL, self.generate_filename(), unfurler)
+        except tornado.web.HTTPError:
+            raise
         except Exception as error:
             text = error.message
         self.write(json.dumps({'text': text}))
